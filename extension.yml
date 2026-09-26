@@ -1,0 +1,68 @@
+schema_version: '1.0'
+extension:
+  id: delivery
+  name: Spec Kit Delivery
+  version: 0.1.0
+  description: Demonstrate, verify, and present deliveries with human acceptance.
+  author: bbjwz
+  repository: https://github.com/bbjwz/speckit-delivery
+  license: MIT
+  category: process
+  effect: read-write
+requires:
+  speckit_version: ==1.0.12
+  tools:
+  - name: uv
+    required: true
+  - name: node
+    required: true
+  - name: npm
+    required: true
+  - name: gh
+    required: true
+  commands:
+  - speckit.tasks
+  - speckit.implement
+provides:
+  commands:
+  - name: speckit.delivery.plan
+    file: commands/speckit.delivery.plan.md
+    description: Map all obligations to demonstrations and prepare the baseline for
+      human approval
+  - name: speckit.delivery.demo
+    file: commands/speckit.delivery.demo.md
+    description: Execute approved scenarios and capture assertion evidence
+  - name: speckit.delivery.verify
+    file: commands/speckit.delivery.verify.md
+    description: Verify complete coverage, integrity, freshness, and GitHub baseline
+      approval
+  - name: speckit.delivery.present
+    file: commands/speckit.delivery.present.md
+    description: Generate L0, L1, L2 browser and editable PowerPoint decks
+  - name: speckit.delivery.status
+    file: commands/speckit.delivery.status.md
+    description: Report missing evidence, failures, and approval state
+  - name: speckit.delivery.gate
+    file: commands/speckit.delivery.gate.md
+    description: Fail closed until baseline approval or final human acceptance is
+      verified
+hooks:
+  after_tasks:
+    command: speckit.delivery.plan
+    optional: false
+    priority: 30
+  before_implement:
+    command: speckit.delivery.gate
+    optional: false
+    priority: 1
+    description: Invoke gate with --phase baseline before implementation
+  after_implement:
+  - command: speckit.delivery.demo
+    optional: false
+    priority: 20
+  - command: speckit.delivery.present
+    optional: false
+    priority: 30
+  - command: speckit.delivery.verify
+    optional: false
+    priority: 40

@@ -1,0 +1,47 @@
+schema_version: '1.0'
+workflow:
+  id: delivery
+  name: Demonstrate, verify, and present
+  version: 0.1.0
+  author: bbjwz
+  description: Take existing Spec Kit tasks through an approved baseline and evidence-based acceptance.
+requires:
+  speckit_version: '==1.0.12'
+  integrations:
+    any: [codex]
+steps:
+  - id: delivery-plan
+    command: speckit.delivery.plan
+    integration: codex
+  - id: baseline-review
+    type: gate
+    message: Human must approve the baseline digest on GitHub; this prompt does not replace the review.
+    options: [approve, reject]
+    on_reject: abort
+  - id: baseline-gate
+    command: speckit.delivery.gate
+    integration: codex
+    input:
+      args: --phase baseline
+  - id: implement
+    command: speckit.implement
+    integration: codex
+  - id: demo
+    command: speckit.delivery.demo
+    integration: codex
+  - id: present
+    command: speckit.delivery.present
+    integration: codex
+  - id: verify
+    command: speckit.delivery.verify
+    integration: codex
+  - id: acceptance-review
+    type: gate
+    message: Review the evidence and decks, then approve the exact evidence digest on the implementation PR.
+    options: [approve, reject]
+    on_reject: abort
+  - id: acceptance-gate
+    command: speckit.delivery.gate
+    integration: codex
+    input:
+      args: --phase acceptance

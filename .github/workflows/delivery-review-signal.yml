@@ -1,0 +1,12 @@
+# No secrets, checkout, or privileged permissions. The default-branch audit
+# independently queries GitHub; this event is only a wake-up signal.
+name: Delivery review signal
+on:
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+permissions: {}
+jobs:
+  signal:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'Review changed; default-branch acceptance audit will recheck GitHub.'
