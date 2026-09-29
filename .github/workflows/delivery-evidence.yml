@@ -7,7 +7,21 @@ permissions:
   pull-requests: read
   actions: read
 jobs:
+  configuration:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report trust-runner configuration
+        env:
+          RUNNER_REF: ${{ vars.DELIVERY_RUNNER_SHA }}
+        run: |
+          if [[ "$RUNNER_REF" =~ ^[0-9a-f]{40}$ ]]; then
+            echo 'A reviewed delivery runner is configured.'
+          else
+            echo '::notice::Delivery evidence remains inactive until a reviewed DELIVERY_RUNNER_SHA is configured.'
+          fi
   authorize:
+    needs: configuration
+    if: ${{ vars.DELIVERY_RUNNER_SHA != '' }}
     runs-on: ubuntu-latest
     outputs:
       receipt: ${{ steps.authorize.outputs.receipt }}

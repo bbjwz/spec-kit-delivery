@@ -137,5 +137,6 @@ def test_public_workflow_uploads_only_the_attestation():
     assert "steps.execute.outputs.attestation" in workflow
     assert "delivery-attestation-" in workflow
     assert workflow.count("actions/upload-artifact@") == 1
+    assert "if: ${{ vars.DELIVERY_RUNNER_SHA != '' }}" in workflow
     for forbidden in ("evidence_dir", "/runs/", "/presentations/", "verification.json"):
         assert forbidden not in workflow
