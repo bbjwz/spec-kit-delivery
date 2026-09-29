@@ -1,0 +1,13 @@
+{
+  "name": "speckit-delivery-presentations",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Portable PowerPoint export for Spec Kit Delivery",
+  "dependencies": {
+    "pptxgenjs": "4.0.1"
+  },
+  "overrides": {
+    "image-size": "2.0.4"
+  }
+}
