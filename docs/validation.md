@@ -8,7 +8,7 @@ labelled authority fixtures; no production approval or passing gate has been fab
 
 Live environment checks on 2026-09-26:
 
-- Private bbjwz/speckit-delivery repository exists.
+- Public bbjwz/spec-kit-delivery repository exists.
 - barthisagent is authenticated separately and has write access; bbjwz remains the human reviewer.
 - GitHub returned HTTP 403 when querying repository rulesets: private protection needs GitHub Pro.
 - Default branch initialization is awaiting explicit permission under the user's publishing policy.

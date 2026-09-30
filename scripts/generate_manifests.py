@@ -74,7 +74,7 @@ manifest = {
         "version": "0.1.0",
         "description": "Demonstrate, verify, and present deliveries with human acceptance.",
         "author": "bbjwz",
-        "repository": "https://github.com/bbjwz/speckit-delivery",
+        "repository": "https://github.com/bbjwz/spec-kit-delivery",
         "license": "MIT",
         "category": "process",
         "effect": "read-write",

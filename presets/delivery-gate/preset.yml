@@ -5,7 +5,7 @@ preset:
   version: 0.1.0
   description: Require an approved demonstration baseline and evidence before delivery acceptance.
   author: bbjwz
-  repository: https://github.com/bbjwz/speckit-delivery
+  repository: https://github.com/bbjwz/spec-kit-delivery
   license: MIT
 requires:
   speckit_version: '==1.0.12'

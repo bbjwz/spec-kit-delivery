@@ -37,7 +37,7 @@ jobs:
         run: '[[ "$RUNNER_REF" =~ ^[0-9a-f]{40}$ ]]'
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          repository: bbjwz/speckit-delivery
+          repository: bbjwz/spec-kit-delivery
           ref: ${{ vars.DELIVERY_RUNNER_SHA }}
           token: ${{ secrets.DELIVERY_RUNNER_READ_TOKEN || github.token }}
           path: trusted-runner

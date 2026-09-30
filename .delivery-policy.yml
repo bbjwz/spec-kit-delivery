@@ -1,5 +1,5 @@
 schema_version: 1
-repository: bbjwz/speckit-delivery
+repository: bbjwz/spec-kit-delivery
 agent: barthisagent
 approvers: [bbjwz]
 verification_workflow: .github/workflows/delivery-evidence.yml
