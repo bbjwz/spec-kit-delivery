@@ -1,0 +1,6 @@
+schema_version: 1
+repository: bbjwz/spec-kit-delivery
+agent: barthisagent
+approvers: [bbjwz]
+verification_workflow: .github/workflows/delivery-evidence.yml
+required_check: delivery-acceptance

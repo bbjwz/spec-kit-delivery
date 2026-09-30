@@ -1,0 +1,24 @@
+title: Example greeting delivery
+obligations:
+  - {id: FR-001, kind: requirement, text: Greet the user, source: spec.md}
+  - {id: AC-001, kind: acceptance, text: Print hello and exit successfully, source: spec.md}
+  - {id: T001, kind: task, text: Implement greeting, source: tasks.md}
+scenarios:
+  - id: greeting
+    title: Greeting succeeds
+    kind: cli
+    obligations: [FR-001, AC-001, T001]
+    expected: The user sees hello and the process exits successfully
+    command: [python3, greet.py]
+    regression: true
+    assertions:
+      - {field: exit_code, operator: equals, value: 0}
+      - {field: stdout, operator: contains, value: hello}
+narrative:
+  problem: Users need a simple working greeting.
+  expected_benefit: Expected to make first-use behavior predictable; benefit is not measured.
+  implementation: A small command-line entrypoint with explicit output assertions.
+  operations: Run locally with synthetic data; inspect nonzero exits before release.
+  limitations: [This example demonstrates a CLI, not a production deployment.]
+  brand: Spec Kit Delivery
+  accent: '#245B78'

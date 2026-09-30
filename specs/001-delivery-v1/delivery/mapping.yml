@@ -1,0 +1,165 @@
+title: Spec Kit Delivery v1
+obligations:
+- id: FR-001
+  kind: requirement
+  text: Map requirements, acceptance criteria, and tasks to an approved baseline.
+  source: spec.md
+- id: FR-002
+  kind: requirement
+  text: Execute CLI, API, UI, and inspection scenarios with observable assertions.
+  source: spec.md
+- id: FR-003
+  kind: requirement
+  text: Preserve failed attempts, bound repairs to three cycles, and reject stale
+    evidence.
+  source: spec.md
+- id: FR-004
+  kind: requirement
+  text: Generate L0/L1/L2 browser and editable PowerPoint presentations from one source.
+  source: spec.md
+- id: FR-005
+  kind: requirement
+  text: Require separate human GitHub approval and protected CI for final acceptance.
+  source: spec.md
+- id: FR-006
+  kind: requirement
+  text: Install independently and alongside Agentstandards without changing its architecture
+    gate.
+  source: spec.md
+- id: AC-001
+  kind: acceptance
+  text: Missing, duplicate, modified, skipped, and failed evidence cannot pass verification.
+  source: spec.md
+- id: AC-002
+  kind: acceptance
+  text: CLI, API, UI, and inspection success/failure fixtures exercise real execution.
+  source: spec.md
+- id: AC-003
+  kind: acceptance
+  text: Browser and PowerPoint preserve content, evidence links, images and speaker
+    notes.
+  source: spec.md
+- id: AC-004
+  kind: acceptance
+  text: Agent, stale, dismissed, or unauthorized reviews cannot approve completion.
+  source: spec.md
+- id: AC-005
+  kind: acceptance
+  text: Clean Spec Kit 1.0.12 installation exposes all six commands and the wrapping
+    preset.
+  source: spec.md
+- id: AC-006
+  kind: acceptance
+  text: No v1 completion claim until this repository has passed real human acceptance.
+  source: spec.md
+- id: T001
+  kind: task
+  text: Implement baseline schemas, complete task mapping, and preserved revisions.
+  source: tasks.md
+- id: T002
+  kind: task
+  text: Implement CLI, API, browser and inspection execution with observable evidence.
+  source: tasks.md
+- id: T003
+  kind: task
+  text: Implement source/artifact verification, failure preservation and bounded repair
+    cycles.
+  source: tasks.md
+- id: T004
+  kind: task
+  text: Generate L0/L1/L2 HTML and editable PowerPoint with notes, runbook and evidence
+    links.
+  source: tasks.md
+- id: T005
+  kind: task
+  text: Implement GitHub approval authority and separated CI execution/auditing.
+  source: tasks.md
+- id: T006
+  kind: task
+  text: Package Spec Kit commands, preset and workflow; validate clean installation/coexistence.
+  source: tasks.md
+- id: T007
+  kind: task
+  text: Prepare the self-demonstration and disclose its real acceptance blockers.
+  source: tasks.md
+scenarios:
+- id: regression
+  title: Delivery regression suite
+  kind: cli
+  regression: true
+  obligations:
+  - FR-001
+  - FR-002
+  - FR-003
+  - FR-004
+  - FR-005
+  - FR-006
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  - AC-005
+  - AC-006
+  - T001
+  - T002
+  - T003
+  - T004
+  - T005
+  - T006
+  expected: All unit and execution integration tests pass.
+  command:
+  - uv
+  - run
+  - --locked
+  - --extra
+  - test
+  - pytest
+  - -q
+  timeout_seconds: 300
+  assertions:
+  - field: exit_code
+    value: 0
+  - field: stdout
+    operator: contains
+    value: passed
+- id: install
+  title: Clean Spec Kit installation
+  kind: cli
+  obligations:
+  - FR-006
+  - AC-005
+  - T006
+  expected: All commands, preset and workflow install in a clean project.
+  command:
+  - bash
+  - scripts/verify_install.sh
+  timeout_seconds: 300
+  assertions:
+  - field: exit_code
+    value: 0
+  - field: stdout
+    operator: contains
+    value: 'speckit-delivery-install: PASS'
+- id: honest-status
+  title: Incomplete acceptance remains visible
+  kind: inspection
+  obligations:
+  - T007
+  - AC-006
+  expected: The report documents that live human acceptance is pending.
+  file: docs/validation.md
+  assertions:
+  - field: text
+    operator: contains
+    value: 'Human acceptance: PENDING'
+narrative:
+  problem: Agents can claim completion without demonstrating the agreed work.
+  expected_benefit: Expected to improve review discipline; business benefit is not
+    measured.
+  implementation: Baseline mapping, execution evidence, shared deck content, and GitHub
+    approval gates.
+  operations: Use synthetic data, preserve failures, and require trusted CI and human
+    acceptance.
+  limitations:
+  - Real acceptance remains pending; local fixtures do not prove human sign-off.
+  - Private repository protection requires an eligible GitHub plan.
