@@ -1,0 +1,80 @@
+name: Delivery acceptance
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+  workflow_run:
+    workflows: [Delivery review signal, Delivery evidence]
+    types: [completed]
+permissions:
+  contents: read
+  pull-requests: read
+  actions: read
+  checks: write
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    environment: delivery-audit
+    steps:
+      - name: Resolve current PR head from GitHub
+        id: target
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.workflow_run.pull_requests[0].number }}
+        run: |
+          python - <<'PY'
+          import json, os, subprocess
+          number = int(os.environ['PR_NUMBER'])
+          pr = json.loads(subprocess.check_output(['gh','api',f"repos/{os.environ['REPOSITORY']}/pulls/{number}"]))
+          if pr['state'] != 'open':
+              raise SystemExit('PR is no longer open')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write(f"number={number}\nhead={pr['head']['sha']}\n")
+          PY
+      - name: Require a reviewed runner revision
+        env:
+          RUNNER_REF: ${{ vars.DELIVERY_RUNNER_SHA }}
+        run: '[[ "$RUNNER_REF" =~ ^[0-9a-f]{40}$ ]]'
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: bbjwz/spec-kit-delivery
+          ref: ${{ vars.DELIVERY_RUNNER_SHA }}
+          token: ${{ secrets.DELIVERY_RUNNER_READ_TOKEN || github.token }}
+          path: trusted-runner
+          persist-credentials: false
+      - name: Check out candidate as data only
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          path: candidate
+          ref: ${{ steps.target.outputs.head }}
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+      - run: uv sync --locked --project trusted-runner
+      - name: Audit without executing candidate code
+        id: audit
+        continue-on-error: true
+        working-directory: trusted-runner
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.target.outputs.number }}
+        run: >-
+          uv run --no-sync python -m speckit_delivery.ci audit
+          --repository "$REPOSITORY" --pr "$PR_NUMBER"
+          --project-root "$GITHUB_WORKSPACE/candidate"
+      - name: Publish acceptance for the exact head
+        if: always() && steps.target.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          HEAD_SHA: ${{ steps.target.outputs.head }}
+          AUDIT_RESULT: ${{ steps.audit.outcome }}
+        run: |
+          python - <<'PY'
+          import json, os, subprocess
+          payload = {'name':'delivery-acceptance', 'head_sha':os.environ['HEAD_SHA'],
+            'status':'completed', 'conclusion':'success' if os.environ['AUDIT_RESULT']=='success' else 'failure',
+            'output':{'title':'Delivery acceptance', 'summary':'See trusted audit job for evidence and human review status.'}}
+          subprocess.run(['gh','api','--method','POST',f"repos/{os.environ['REPOSITORY']}/check-runs",'--input','-'],
+                         input=json.dumps(payload),text=True,check=True)
+          PY

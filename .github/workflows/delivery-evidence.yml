@@ -1,0 +1,95 @@
+name: Delivery evidence
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+permissions:
+  contents: read
+  pull-requests: read
+  actions: read
+jobs:
+  configuration:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report trust-runner configuration
+        env:
+          RUNNER_REF: ${{ vars.DELIVERY_RUNNER_SHA }}
+        run: |
+          if [[ "$RUNNER_REF" =~ ^[0-9a-f]{40}$ ]]; then
+            echo 'A reviewed delivery runner is configured.'
+          else
+            echo '::notice::Delivery evidence remains inactive until a reviewed DELIVERY_RUNNER_SHA is configured.'
+          fi
+  authorize:
+    needs: configuration
+    if: ${{ vars.DELIVERY_RUNNER_SHA != '' }}
+    runs-on: ubuntu-latest
+    outputs:
+      receipt: ${{ steps.authorize.outputs.receipt }}
+      head: ${{ steps.authorize.outputs.head }}
+    steps:
+      - name: Require a reviewed runner revision
+        env:
+          RUNNER_REF: ${{ vars.DELIVERY_RUNNER_SHA }}
+        run: '[[ "$RUNNER_REF" =~ ^[0-9a-f]{40}$ ]]'
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: bbjwz/spec-kit-delivery
+          ref: ${{ vars.DELIVERY_RUNNER_SHA }}
+          token: ${{ secrets.DELIVERY_RUNNER_READ_TOKEN || github.token }}
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+      - run: uv sync --locked
+      - id: authorize
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: >-
+          uv run --no-sync python -m speckit_delivery.ci authorize
+          --repository "$REPOSITORY" --pr "$PR_NUMBER"
+          --output "$RUNNER_TEMP/receipt.json"
+  evidence:
+    needs: authorize
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          path: candidate
+          ref: ${{ needs.authorize.outputs.head }}
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: bbjwz/spec-kit-delivery
+          ref: ${{ vars.DELIVERY_RUNNER_SHA }}
+          token: ${{ secrets.DELIVERY_RUNNER_READ_TOKEN || github.token }}
+          path: trusted-runner
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+      - run: uv sync --locked --project trusted-runner
+      - run: npm ci --ignore-scripts --prefix trusted-runner
+      - run: uv run --project trusted-runner playwright install --with-deps chromium
+      - name: Materialize the authorization receipt
+        env:
+          RECEIPT: ${{ needs.authorize.outputs.receipt }}
+        run: |
+          python - <<'PY'
+          import os, base64, pathlib
+          pathlib.Path(os.environ['RUNNER_TEMP'], 'delivery-receipt.json').write_bytes(base64.b64decode(os.environ['RECEIPT']))
+          PY
+      - id: execute
+        working-directory: trusted-runner
+        run: >-
+          uv run --no-sync python -m speckit_delivery.ci execute
+          --project-root "$GITHUB_WORKSPACE/candidate"
+          --receipt "$RUNNER_TEMP/delivery-receipt.json"
+          --attestation "$RUNNER_TEMP/attestation.json"
+          --scrub-private
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: delivery-attestation-${{ steps.execute.outputs.evidence_hash }}
+          path: ${{ steps.execute.outputs.attestation }}
+          if-no-files-found: error
+          retention-days: 30
